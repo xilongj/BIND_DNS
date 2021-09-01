@@ -1,2 +1,2 @@
-# DNS-_-
-DNS 安装部署与维护指南
+# bind DNS
+Guide for DNS installation, maintance
