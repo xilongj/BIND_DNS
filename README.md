@@ -1,2 +1,2 @@
 # bind DNS
-Guide for DNS installation, maintance
+Guide for bind DNS installation, maintenance
