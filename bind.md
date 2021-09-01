@@ -1,0 +1,480 @@
+## DNS BIND 9
+
+#### #1. 搭建环境
+
+```
+[root@hdss7-11 ~]# hostname
+hdss7-11.host.com
+[root@hdss7-11 ~]# hostname -I
+10.4.7.11
+[root@hdss7-11 ~]# cat /etc/redhat-release
+CentOS Linux release 7.9.2009 (Core)
+```
+
+#### #2. 安装软件
+
+```html
+[root@hdss7-11 ~]# yum -y install epel-release
+# v9.11.4
+[root@hdss7-11 ~]# yum -y install bind
+Installed:
+  bind.x86_64 32:9.11.4-26.P2.el7_9.5
+
+[root@hdss7-11 ~]# id named
+uid=25(named) gid=25(named) groups=25(named)
+```
+
+#### #3. 主配置文件
+
+```
+# 主配置文件格式
+[root@hdss7-11 ~]# cat /etc/named.conf
+options {
+	// 全局选项
+};
+
+logging {
+	// 日志文件
+};
+
+zone "." IN {
+	// 定义区域
+};
+include 加载文件
+
+# 主配置文件注意事项
+	- 语法严格，分号，空格
+	- 文件权限，属主:root   属组：named, 640
+```
+
+```
+# named.ca
+[root@hdss7-11 ~]# cat /var/named/named.ca
+
+; <<>> DiG 9.11.3-RedHat-9.11.3-3.fc27 <<>> +bufsize=1200 +norec @a.root-servers.net
+; (2 servers found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 46900
+;; flags: qr aa; QUERY: 1, ANSWER: 13, AUTHORITY: 0, ADDITIONAL: 27
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1472
+;; QUESTION SECTION:
+;.                              IN      NS
+
+;; ANSWER SECTION:
+.                       518400  IN      NS      a.root-servers.net.
+.                       518400  IN      NS      b.root-servers.net.
+.                       518400  IN      NS      c.root-servers.net.
+.                       518400  IN      NS      d.root-servers.net.
+.                       518400  IN      NS      e.root-servers.net.
+.                       518400  IN      NS      f.root-servers.net.
+.                       518400  IN      NS      g.root-servers.net.
+.                       518400  IN      NS      h.root-servers.net.
+.                       518400  IN      NS      i.root-servers.net.
+.                       518400  IN      NS      j.root-servers.net.
+.                       518400  IN      NS      k.root-servers.net.
+.                       518400  IN      NS      l.root-servers.net.
+.                       518400  IN      NS      m.root-servers.net.
+
+;; ADDITIONAL SECTION:
+a.root-servers.net.     518400  IN      A       198.41.0.4
+b.root-servers.net.     518400  IN      A       199.9.14.201
+c.root-servers.net.     518400  IN      A       192.33.4.12
+d.root-servers.net.     518400  IN      A       199.7.91.13
+e.root-servers.net.     518400  IN      A       192.203.230.10
+f.root-servers.net.     518400  IN      A       192.5.5.241
+g.root-servers.net.     518400  IN      A       192.112.36.4
+h.root-servers.net.     518400  IN      A       198.97.190.53
+i.root-servers.net.     518400  IN      A       192.36.148.17
+j.root-servers.net.     518400  IN      A       192.58.128.30
+k.root-servers.net.     518400  IN      A       193.0.14.129
+l.root-servers.net.     518400  IN      A       199.7.83.42
+m.root-servers.net.     518400  IN      A       202.12.27.33
+a.root-servers.net.     518400  IN      AAAA    2001:503:ba3e::2:30
+b.root-servers.net.     518400  IN      AAAA    2001:500:200::b
+c.root-servers.net.     518400  IN      AAAA    2001:500:2::c
+d.root-servers.net.     518400  IN      AAAA    2001:500:2d::d
+e.root-servers.net.     518400  IN      AAAA    2001:500:a8::e
+f.root-servers.net.     518400  IN      AAAA    2001:500:2f::f
+g.root-servers.net.     518400  IN      AAAA    2001:500:12::d0d
+h.root-servers.net.     518400  IN      AAAA    2001:500:1::53
+i.root-servers.net.     518400  IN      AAAA    2001:7fe::53
+j.root-servers.net.     518400  IN      AAAA    2001:503:c27::2:30
+k.root-servers.net.     518400  IN      AAAA    2001:7fd::1
+l.root-servers.net.     518400  IN      AAAA    2001:500:9f::42
+m.root-servers.net.     518400  IN      AAAA    2001:dc3::35
+
+;; Query time: 24 msec
+;; SERVER: 198.41.0.4#53(198.41.0.4)
+;; WHEN: Thu Apr 05 15:57:34 CEST 2018
+;; MSG SIZE  rcvd: 811
+```
+
+#### #4. 修改主配置文件
+
+```
+[root@hdss7-11 ~]# cat /etc/named.conf
+//
+// named.conf
+//
+// Provided by Red Hat bind package to configure the ISC BIND named(8) DNS
+// server as a caching only nameserver (as a localhost DNS resolver only).
+//
+// See /usr/share/doc/bind*/sample/ for example named configuration files.
+//
+// See the BIND Administrator's Reference Manual (ARM) for details about the
+// configuration located in /usr/share/doc/bind-{version}/Bv9ARM.html
+
+options {
+        listen-on port 53 { 10.4.7.11; };
+        directory       "/var/named";
+        dump-file       "/var/named/data/cache_dump.db";
+        statistics-file "/var/named/data/named_stats.txt";
+        memstatistics-file "/var/named/data/named_mem_stats.txt";
+        recursing-file  "/var/named/data/named.recursing";
+        secroots-file   "/var/named/data/named.secroots";
+        allow-query     { any; };
+
+        /*
+         - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
+         - If you are building a RECURSIVE (caching) DNS server, you need to enable
+           recursion.
+         - If your recursive DNS server has a public IP address, you MUST enable access
+           control to limit queries to your legitimate users. Failing to do so will
+           cause your server to become part of large scale DNS amplification
+           attacks. Implementing BCP38 within your network would greatly
+           reduce such attack surface
+        */
+        recursion yes;
+
+        dnssec-enable yes;
+        dnssec-validation yes;
+
+        /* Path to ISC DLV key */
+        bindkeys-file "/etc/named.root.key";
+
+        managed-keys-directory "/var/named/dynamic";
+
+        pid-file "/run/named/named.pid";
+        session-keyfile "/run/named/session.key";
+};
+
+logging {
+        channel default_debug {
+                file "data/named.run";
+                severity dynamic;
+        };
+};
+
+zone "." IN {
+        type hint;
+        file "named.ca";
+};
+
+include "/etc/named.rfc1912.zones";
+include "/etc/named.root.key";
+```
+
+#### #5. 启动服务
+
+```
+[root@hdss7-11 ~]# systemctl start named
+[root@hdss7-11 ~]# netstat -lntup
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 10.4.7.11:53            0.0.0.0:*               LISTEN      1674/named
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      880/sshd
+tcp        0      0 127.0.0.1:953           0.0.0.0:*               LISTEN      1674/named
+tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      1041/master
+tcp6       0      0 :::22                   :::*                    LISTEN      880/sshd
+tcp6       0      0 ::1:953                 :::*                    LISTEN      1674/named
+tcp6       0      0 ::1:25                  :::*                    LISTEN      1041/master
+udp        0      0 10.4.7.11:53            0.0.0.0:*                           1674/named
+```
+
+```
+[root@hdss7-11 ~]# netstat -lntup | grep 53
+tcp        0      0 10.4.7.11:53            0.0.0.0:*               LISTEN      1674/named
+tcp        0      0 127.0.0.1:953           0.0.0.0:*               LISTEN      1674/named
+tcp6       0      0 ::1:953                 :::*                    LISTEN      1674/named
+udp        0      0 10.4.7.11:53            0.0.0.0:*                           1674/named
+```
+
+#### #6. 验证解析
+
+```
+[root@hdss7-11 network-scripts]# cat ifcfg-eth0 | grep DNS
+#DNS1=223.5.5.5
+[root@hdss7-11 network-scripts]# cat /etc/resolv.conf
+# Generated by NetworkManager
+search host.com
+nameserver 10.4.7.11
+
+[root@hdss7-11 network-scripts]# ping -c 2 baidu.com
+PING baidu.com (220.181.38.148) 56(84) bytes of data.
+64 bytes from 220.181.38.148 (220.181.38.148): icmp_seq=1 ttl=128 time=7.62 ms
+64 bytes from 220.181.38.148 (220.181.38.148): icmp_seq=2 ttl=128 time=5.72 ms
+
+--- baidu.com ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 3790ms
+rtt min/avg/max/mdev = 5.725/6.672/7.620/0.951 ms
+[root@hdss7-11 network-scripts]# ping -c 2 bing.com
+PING bing.com (13.107.21.200) 56(84) bytes of data.
+64 bytes from 13.107.21.200 (13.107.21.200): icmp_seq=1 ttl=128 time=50.1 ms
+64 bytes from 13.107.21.200 (13.107.21.200): icmp_seq=2 ttl=128 time=49.4 ms
+
+--- bing.com ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 2045ms
+rtt min/avg/max/mdev = 49.459/49.779/50.100/0.390 ms
+```
+
+#### #7. DNS自定义区域配置
+
+```
+[root@hdss7-11 ~]# ls -l /etc/named.rfc1912.zones
+-rw-r-----. 1 root named 931 Jun 21  2007 /etc/named.rfc1912.zones
+```
+
+```
+定义在/etc/named.rfc1912.zones
+格式:
+    zone 'host.com' IN {
+    type master|slave|hint;			//自定义区域类型
+    file /path/to/zonefile;			//绝对或相对路径
+    allow-update {ip|acl};			//是否允许动态更新
+    }；
+也可配置在自定义的其它文件中，并在named.conf里include
+注意文件权限,属主root数组named, 640
+```
+
+#### #8. 区域数据库文件
+
+```
+# 资源记录 (Resource Record) 格式:
+name [TTL 缓存事件] IN 资源记录类型(RRtype) Value
+# 常见资源记录 (Resource Record) 类型: (RR-type)
+    SOA: Start of Authority    起始授权
+    NS: 域名服务器的标识记录
+    A： IPv4 主机地址
+    AAAA: IPv6主机地址
+    MX: 邮件交换记录
+    CNAME: Canonical Name, 正式名称(别名) CDN里用的最多
+    TXT: 文本字符串,长度限制512Byte, 通常做SPF记录(反垃圾邮件)
+    PTR记录：指针记录，用来实现反向解析
+# 宏定义 (以$开头部分)
+    $TTL 60
+    $ORIGIN
+# 注释 (以分号；开头)
+    ；1minute
+    ; serial
+注意:
+    区域数据库文件中有且仅有资源记录,宏定义,和注释
+    通常定义在/var/named/目录下且以.zone结尾，属主root 属组named 权限640
+```
+
+#### #9.自定义区域配置文件
+
+```
+[root@hdss7-11 ~]# tail -n 5 /etc/named.rfc1912.zones
+zone "host.com" IN {
+        type master;
+        file "host.com.zone";
+        allow-update { 10.4.7.11;10.4.7.12; };
+};
+# 检查配置文件语法
+[root@hdss7-11 ~]# named-checkconf
+```
+
+```
+这里定义一个host.com主机域,可放在/etc/named.rfc1912.zones文件中，也可放置在自定义文件中, 在/etc/named.conf里include进来。
+# 主机域
+    主机域与业务域无关, 且建议分开;
+    主机域其实是一个假域，也就是说，主机域其实是不能解析到互联网上的，它只对局域网(企业内网)提供服务。
+```
+
+```
+# 自定义区域数据库文件
+    一般而言是文本文件，且仅包含资源记录，宏定义和注释；
+    需在自定义区域配置文件中指定存在路径，可以绝对路径或相对路径[相对于/var/named目录]
+    注意文件属性[属主，属组及权限]
+```
+
+```
+# 配置范例
+[root@hdss7-11 ~]# cat /var/named/host.com.zone
+host.com.       600             IN SOA dns.host.com. dnsadmin.host.com. (
+                                20210901 ; serial number
+                                10800    ; refresh time         (3 hours)
+                                900      ; retry time           (15 mins)
+                                604800   ; expire time          (1 week)
+                                86400    ; negative answer TTL  (1 day)
+                                )
+host.com.       600         IN  NS      dns.host.com.
+
+dns.host.com.   60          IN  A       10.4.7.11
+```
+
+#### #10. 常用资源记录类型
+
+```
+# 资源记录格式
+name [TTL(缓存时间)] IN 资源记录类型 (RRtype) Value
+```
+
+```
+# SOA记录
+host.com  IN SOA ns1.host.com. dnsadmin.host.com.
+    SOA: 起始授权,只能有一条
+    name: 只能是区域名称,通常可以简写为@， 例如: google.com or host.com；
+    value: 有n个数值,最主要的是主DNS服务器的FQDN，点不可省略；
+```
+
+```
+注：SOA必须是区域数据库文件第一条记录
+@ 600 IN SOA dns.host.com.  管理员邮箱(dnsadmin.host.com.)(
+	序列号(serial number) ； 注释内容，十进制数据,不能超过10位，通常使用日期时间戳，例如 20210901
+	刷新时间(refresh time) ；即每隔多久到主服务器检查一次;
+    重试时间(retry time) ;   应该小于refresh time;
+    过期时间(expire time);  当辅助DNS服务器无法联系主DNS时，辅助DNS服务器可以在多长时间内认为其缓存是有效的，并供用户查询；
+    netgative answer ttl;  非权威应答的TTL，缓存DNS服务器可以缓存记录多长时间;
+)
+```
+
+```
+# NS记录
+NS: 可以有多条,每一个NS记录，必须对应一个A记录；
+    name: 区域名称，通常可以简写为@
+    value: DNS服务器的FQDN [可以使用相对名称]
+
+```
+
+```HTML
+[root@hdss7-11 ~]# cat /var/named/host.com.zone
+host.com.       600             IN SOA dns.host.com. dnsadmin.host.com. (
+                                20210901 ; serial number
+                                10800    ; refresh time         (3 hours)
+                                900      ; retry time           (15 mins)
+                                604800   ; expire time          (1 week)
+                                86400    ; negative answer TTL  (1 day)
+                                )
+host.com.       600         IN  NS      dns.host.com.
+
+dns.host.com.   60          IN  A       10.4.7.11
+```
+
+```
+# 等价写法
+[root@hdss7-11 ~]# cat /var/named/host.com.zone
+$TTL    600 ; 10mins
+@                       IN      SOA dns.host.com. dnsadmin.host.com. (
+                                20210901 ; serial number
+                                10800    ; refresh time         (3 hours)
+                                900      ; retry time           (15 mins)
+                                604800   ; expire time          (1 week)
+                                86400    ; negative answer TTL  (1 day)
+                                )
+                                NS      dns.host.com.
+
+$ORIGIN host.com.
+$TTL    60 ; 1 min
+dns                             A       10.4.7.11
+```
+
+```
+[root@hdss7-11 ~]# named-checkzone host.com /var/named/host.com.zone
+zone host.com/IN: loaded serial 20210901
+OK
+```
+
+```
+# A记录
+A: 只能定义在正向区域数据库文件中	[IPv4 --> FQDN]
+    name: FQDN可以使用相对名称；
+    value: IP
+```
+
+```
+www    600(单位s)	  IN A 10.4.7.11
+www	   600(单位s)	  IN A 10.4.7.12
+注: 可以做轮询
+```
+
+```
+# MX记录
+MX: 邮件交换记录，可以有多个[用的不多]
+    name: 区域名称，用于标识smtp服务器；
+    value: 包含优先级和FQDN;
+    优先级:0-99,数字越小,级别越高;
+```
+
+```
+@	600		IN 		MX	10	mail
+@	600		IN		MX	20	smtp
+```
+
+```
+# CNAME记录
+CNAME:  canonical name,  别名 [FQDN -> FQDN]
+    name: FQDN
+    value: FQDN
+#example:
+www                             A       10.4.7.11
+ecat                 IN         CNAME   www
+```
+
+#### #11. 主机域配置 - 实战
+
+```
+[root@hdss7-11 ~]# tail -n 5 /etc/named.rfc1912.zones
+zone "host.com" IN {
+        type master;
+        file "host.com.zone";
+        allow-update { 10.4.7.11;10.4.7.12; };
+};
+```
+
+```
+[root@hdss7-11 ~]# cat /var/named/host.com.zone
+$TTL    600 ; 10mins
+@                       IN      SOA dns.host.com. dnsadmin.host.com. (
+                                20210901 ; serial number
+                                10800    ; refresh time         (3 hours)
+                                900      ; retry time           (15 mins)
+                                604800   ; expire time          (1 week)
+                                86400    ; negative answer TTL  (1 day)
+                                )
+                                NS      dns.host.com.
+
+$ORIGIN host.com.
+$TTL    60 ; 1 min
+hdss7-11                        A       10.4.7.11
+hdss7-12                        A       10.4.7.12
+dns                             A       10.4.7.11
+```
+
+```
+[root@hdss7-11 ~]# named-checkzone host.com /var/named/host.com.zone
+zone host.com/IN: loaded serial 20210901
+OK
+[root@hdss7-11 ~]# named-checkconf
+
+[root@hdss7-11 ~]# chgrp named /var/named/host.com.zone
+[root@hdss7-11 ~]# ls -l /var/named/host.com.zone
+-rw-r--r-- 1 root named 373 Sep  1 15:14 /var/named/host.com.zone
+[root@hdss7-11 ~]# chmod 640 /var/named/host.com.zone
+[root@hdss7-11 ~]# ls -l /var/named/host.com.zone
+-rw-r----- 1 root named 373 Sep  1 15:14 /var/named/host.com.zone
+```
+
+```
+[root@hdss7-11 ~]# systemctl restart named
+[root@hdss7-11 ~]# ping hdss7-12
+PING hdss7-12.host.com (10.4.7.12) 56(84) bytes of data.
+64 bytes from 10.4.7.12 (10.4.7.12): icmp_seq=1 ttl=64 time=0.189 ms
+64 bytes from 10.4.7.12 (10.4.7.12): icmp_seq=2 ttl=64 time=0.873 ms
+64 bytes from 10.4.7.12 (10.4.7.12): icmp_seq=3 ttl=64 time=0.346 ms
+64 bytes from 10.4.7.12 (10.4.7.12): icmp_seq=4 ttl=64 time=0.398 ms
+```
+
